@@ -1,17 +1,20 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import {render} from "react-dom";
 
-import { createStore} from "redux";
+import App from "./app/containers/App";
+import logger from "redux-logger";
+import { createStore, combineReducers, applyMiddleware} from "redux";
+import {Provider} from "react-redux";
+
 const initialState = {
     result: 1,
-    lastValues: [],
-    username:"Max"
+    lastValues: []
 }
 
-const mathReducer = (state = initialState, action) => {
+const mathReducer = (state = {
+    result: 1,
+    lastValues: []
+}, action) => {
     switch (action.type) {
         case "ADD":
             state = {
@@ -30,32 +33,37 @@ const mathReducer = (state = initialState, action) => {
     }
     return state;
 }
+const userReducer = (state = {
+   name: "Max",
+    age: 27
+}, action) => {
+    switch (action.type) {
+        case "SET_NAME":
+            state = {
+                ...state,
+                name : action.payload
+            }
+            break;
+        case "SET_AGE":
+            state = {
+                ...state,
+                age : action.payload
+            }
+            break;
+    }
+    return state;
+}
 
-const store = createStore(mathReducer);
+const myLogger = (store) => (next) => (action) => {
+    console.log('Logged Action', action)
+    next(action);
+}
 
-store.subscribe(()=>{
-    console.log("store updated !!", store.getState())
-})
+const store = createStore(combineReducers({math : mathReducer,user :userReducer}),
+    {},
+    applyMiddleware(logger) );
 
-store.dispatch({
-    type:"ADD",
-    payload:100
-})
+render(
+    <Provider store={store}><App /></Provider>,
+    window.document.getElementById('app'));
 
-store.dispatch({
-    type:"SUBTRACT",
-    payload:80
-})
-
-
-// ReactDOM.render(
-//   <React.StrictMode>
-//     <App />
-//   </React.StrictMode>,
-//   document.getElementById('root')
-// );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-//reportWebVitals();
